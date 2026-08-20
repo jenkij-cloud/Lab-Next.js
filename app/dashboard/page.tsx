@@ -3,8 +3,8 @@ import LogoutButton from '@/components/LogoutButton';
 
 export const dynamic = 'force-dynamic'; // ← บังคับให้ render ใหม่ทุกครั้ง ไม่ cache
 
-export default function DashboardPage() {
- const messages = getMessages(); // Server Component — เรียก Model ตรงได้
+export default async function DashboardPage() {
+ const messages = await getMessages(); // Server Component — เรียก Model ตรงได้
  
  return (
  <main className="p-8">

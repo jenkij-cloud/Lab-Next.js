@@ -6,7 +6,7 @@ export async function PATCH(
 ) {
     const { id } = await params; // Next.js 15+ ต้องใช้ await กับ params
     const updates = await request.json();
-    const updated = editMessage(id, updates);
+    const updated = await editMessage(id, updates);
 
     if (!updated) {
         return Response.json({ error: 'ไม่พบข้อความนี้' }, { status: 404 });
@@ -20,7 +20,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-    const deleted = removeMessage(id);
+    const deleted = await removeMessage(id);
     
     if (!deleted) {
         return Response.json({ error: 'ไม่พบข้อความนี้' }, { status: 404 });

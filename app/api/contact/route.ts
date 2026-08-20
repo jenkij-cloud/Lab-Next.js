@@ -1,11 +1,12 @@
 import { createMessage, listMessages } from '@/lib/messageService';
+import { withErrorHandling } from '@/lib/withErrorHandling';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') ?? '';
     const sort = searchParams.get('sort'); // ?sort=newest หรือ ?sort=oldest
 
-    const all = listMessages();
+    const all = await listMessages();
     
     // 1. กรองข้อมูล (Filter)
     let result = search
@@ -22,12 +23,8 @@ export async function GET(request: Request) {
     return Response.json({ messages: result });
 }
 
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async (request: Request) => {
     const body = await request.json();
-    try {
-        const saved = createMessage(body);
-        return Response.json({ ok: true, item: saved }, { status: 201 });
-    } catch (err) {
-        return Response.json({ error: (err as Error).message }, { status: 400 });
-    }
-}
+    const saved = await createMessage(body);
+    return Response.json({ ok: true, item: saved }, { status: 201 });
+});
