@@ -11,6 +11,7 @@ model Message {
     name      String
     email     String   @unique
     message   String
+    authorId  String?
     createdAt DateTime @default(now())
 }
 
@@ -20,3 +21,20 @@ model Todo {
     completed Boolean  @default(false)
     createdAt DateTime @default(now())
 }
+
+model User {
+    id        String   @id @default(cuid())
+    email     String   @unique
+    password  String
+    createdAt DateTime @default(now())
+}
+
+model Comment {
+    id        String   @id @default(cuid())
+    postId    String
+    author    String
+    authorId  String?
+    text      String
+    createdAt DateTime @default(now())
+}
+

@@ -1,8 +1,17 @@
 import * as MessageModel from './messages';
 import { Prisma } from '@prisma/client';
+import { messageSchema } from './schemas';
+import { ZodError, z } from 'zod';
+import { ValidationError, NotFoundError, ForbiddenError } from './errors';
 
-export async function createMessage(data: { name: string; email: string; message: string }) {
-    if (!data.name || !data.email || !data.message) throw new Error('ข้อมูลไม่ครบ');
+export async function createMessage(raw: unknown) {
+    let data;
+    try {
+        data = messageSchema.parse(raw);
+    } catch (err) {
+        if (err instanceof ZodError) throw new ValidationError(err.issues[0].message);
+        throw err;
+    }
     try {
         return await MessageModel.addMessage(data);
     } catch (err) {
@@ -19,15 +28,34 @@ export async function listMessages() {
 
 export async function getMessageById(id: string) {
     const messages = await MessageModel.getMessages();
-    return messages.find((m) => m.id === id) ?? null;
+    const message = messages.find((m) => m.id === id);
+    if (!message) {
+        throw new NotFoundError('ไม่พบข้อความนี้');
+    }
+    return message;
 }
 
-export async function editMessage(id: string, updates: object) {
+const updateMessageSchema = z.object({
+    message: z.string().min(1, 'ข้อความห้ามเป็นค่าว่าง').max(1000).optional(),
+});
+
+export async function editMessage(id: string, updates: unknown, sessionUserId: string) {
+    const message = await getMessageById(id); // throw NotFoundError ถ้าไม่พบ (มีอยู่แล้วจาก Week 9)
+    if (message.authorId !== sessionUserId) {
+        throw new ForbiddenError('คุณไม่มีสิทธิ์แก้ไขข้อความนี้');
+    }
+    let validatedUpdates: { message?: string };
     try {
-        return await MessageModel.updateMessage(id, updates);
+        validatedUpdates = updateMessageSchema.parse(updates);
+    } catch (err) {
+        if (err instanceof ZodError) throw new ValidationError(err.issues[0].message);
+        throw err;
+    }
+    try {
+        return await MessageModel.updateMessage(id, validatedUpdates);
     } catch (err) {
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
-            return null; // ให้ Controller เดิมตอบ 404 เหมือน Week 8
+            throw new NotFoundError('ไม่พบข้อความนี้');
         }
         throw err;
     }
