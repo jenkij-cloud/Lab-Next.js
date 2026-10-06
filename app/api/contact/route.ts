@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     
     // 1. กรองข้อมูล (Filter)
     let result = search
-        ? all.filter((m) => m.name.includes(search) || m.message.includes(search))
+        ? all.filter((m: any) => m.name.includes(search) || m.message.includes(search))
         : [...all];
 
     // 2. จัดเรียงข้อมูล (Sort)
